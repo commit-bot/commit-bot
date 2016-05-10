@@ -8,7 +8,7 @@ class ImperativeVerbs implements Check {
     function check(string $commitMessage): array {
         $words = explode(" ", $commitMessage);
 
-        if (preg_match('~ed|ing|^adds$~i', $words[0])) {
+        if (preg_match('~ed|ing|^adds|^small|^more$~i', $words[0])) {
             return [
                 "Use verbs in imperative style like 'Merge' or 'Revert' instead of 'Merged' or 'Reverting'.",
             ];
