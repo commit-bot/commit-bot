@@ -22,7 +22,7 @@ class Hook {
         $secret = yield from $this->fetchSecret($owner, $repository);
 
         $event = $request->getHeader("x-github-event") ?? "";
-        $signature = $request->getHeader("x-github-signature") ?? "";
+        $signature = $request->getHeader("x-hub-signature") ?? "";
 
         $rawBody = yield $request->getBody();
         $payload = json_decode($rawBody);
