@@ -68,6 +68,8 @@ class Setup {
                 "error" => $error,
                 "repository" => $owner . "/" . $repository,
             ])));
+
+            return;
         }
 
         $user = $request->getLocalVar(RequestKeys::USER);
