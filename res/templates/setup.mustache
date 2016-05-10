@@ -1,0 +1,22 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Dashboard</title>
+</head>
+<body>
+<form action="/logout" method="POST">
+    <button type="submit">
+        Logout
+    </button>
+</form>
+<hr/>
+<form action="/setup" method="POST">
+    {{data.error}}
+
+    <input type="text" autocomplete="off" name="repository" placeholder="Repository" value="{{data.repository}}" />
+    <button type="submit">
+        Enable
+    </button>
+</form>
+</body>
+</html>

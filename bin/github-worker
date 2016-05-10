@@ -1,0 +1,209 @@
+#!/usr/bin/env php
+<?php
+
+use Amp\Artax\Client;
+use Amp\Artax\Cookie\NullCookieJar;
+use Amp\Artax\HttpClient;
+use Amp\Artax\Response;
+use Amp\Beanstalk\BeanstalkClient;
+use Amp\Mysql;
+use Amp\Mysql\ResultSet;
+use Amp\Success;
+use Auryn\Injector;
+use Kelunik\CommitBot\Check;
+use Kelunik\CommitBot\Check\FirstLetterUppercase;
+use Kelunik\CommitBot\Check\ImperativeVerbs;
+use Kelunik\CommitBot\Check\Length;
+use Kelunik\CommitBot\Check\NoTrailingPeriod;
+use Kelunik\CommitBot\GithubStatus;
+use Kelunik\CommitBot\Queue\BeanstalkConsumer;
+use Kelunik\CommitBot\Queue\Consumer;
+use Kelunik\CommitBot\Queue\Message;
+use function Amp\resolve;
+use function phpish\link_header\parse as parseLinks;
+
+require __DIR__ . "/../vendor/autoload.php";
+
+$config = json_decode(file_get_contents(__DIR__ . "/../res/config/config.json"), true);
+
+$injector = new Injector;
+
+$injector->define(Mysql\Pool::class, [
+    ":connStr" => $config["mysql"],
+]);
+
+$injector->define(BeanstalkClient::class, [
+    ":uri" => $config["beanstalk"],
+]);
+
+$injector->alias(HttpClient::class, Client::class);
+$injector->alias(Consumer::class, BeanstalkConsumer::class);
+
+$injector->prepare(Client::class, function (Client $client) {
+    $client->setOption(Client::OP_DEFAULT_USER_AGENT, "kelunik/commit-bot");
+});
+
+$checks = [
+    Length::class,
+    NoTrailingPeriod::class,
+    FirstLetterUppercase::class,
+    ImperativeVerbs::class,
+];
+
+$checks = array_map(function ($check) {
+    return new $check;
+}, $checks);
+
+$mysql = $injector->make(Mysql\Pool::class);
+$httpClient = $injector->make(Client::class);
+
+$worker = new class($mysql, $httpClient, $checks) {
+    private $httpClient;
+    private $mysql;
+    private $checks;
+
+    public function __construct(Mysql\Pool $mysql, HttpClient $httpClient, array $checks) {
+        $this->httpClient = $httpClient;
+        $this->mysql = $mysql;
+        $this->checks = $checks;
+    }
+
+    public function processJob(Message $message): \Generator {
+        $jobId = $message->getId();
+        $job = json_decode($message->getBody());
+
+        if (null === $job) {
+            $message->acknowledge();
+        }
+
+        try {
+            $commits = yield from $this->fetchCommits($job->owner, $job->repository, $job->pr);
+        } catch (RuntimeException $e) {
+            $message->acknowledge();
+
+            return new Success;
+        }
+
+        $errors = [];
+
+        print "$jobId: Fetched " . count($commits) . " commit(s), analyzing ..." . PHP_EOL;
+
+        $head = null;
+
+        foreach ($commits as $commit) {
+            $commitErrors = [];
+
+            /** @var Check $check */
+            foreach ($this->checks as $check) {
+                $commitErrors = array_merge($commitErrors, $check->check($commit->message));
+            }
+
+            if (!empty($commitErrors)) {
+                $errors[] = "<span class='commit'>commit {$commit->sha}</span>" . PHP_EOL . "<span class='message'>" . htmlspecialchars($commit->message) . "</span>" . PHP_EOL . PHP_EOL . implode(PHP_EOL, array_map(function ($error) {
+                        return " - " . htmlspecialchars($error);
+                    }, $commitErrors)) . PHP_EOL . PHP_EOL . PHP_EOL;
+            }
+
+            $head = $commit->sha;
+        }
+
+        print "$jobId: " . count($errors) . " errors found." . PHP_EOL;
+
+        if ($head) {
+            $state = empty($errors) ? GithubStatus::STATE_SUCCESS : GithubStatus::STATE_FAILURE;
+            $description = empty($errors) ? "All commit messages are fine" : count($errors) . " commit message(s) aren't fine";
+
+            /** @var ResultSet $tokenResult */
+            $tokenResult = yield $this->mysql->prepare("SELECT users.github_token FROM users, hooks WHERE hooks.owner = ? && hooks.repository = ? && hooks.user = users.id", [
+                $job->owner, $job->repository,
+            ]);
+
+            $tokenObject = yield $tokenResult->fetchObject();
+            $token = $tokenObject->github_token ?? "";
+
+            $githubStatus = new GithubStatus(new Client(new NullCookieJar), "commit-bot");
+
+            try {
+                yield from $githubStatus->setStatus($token, $job->owner, $job->repository, $head, $state, "https://commit-bot.kelunik.com/github/{$job->owner}/{$job->repository}/{$head}", $description);
+            } catch (Throwable $e) {
+                print "$jobId (err): " . $e->getMessage() . PHP_EOL;
+            }
+
+            yield $this->mysql->prepare("REPLACE INTO jobs (owner, repository, sha, state, log) VALUES (?, ?, ?, ?, ?)", [
+                $job->owner,
+                $job->repository,
+                hex2bin($head),
+                $state === GithubStatus::STATE_SUCCESS ? 1 : 2,
+                implode("", $errors),
+            ]);
+        }
+
+        print "$jobId: finished" . PHP_EOL;
+
+        return $message->acknowledge()->when(function ($error) use ($jobId) {
+            if ($error) {
+                print "$jobId: acknowledge error" . PHP_EOL;
+            } else {
+                print "$jobId: acknowledged" . PHP_EOL;
+            }
+        });
+    }
+
+    private function fetchCommits(string $owner, string $repository, int $pullRequest): \Generator {
+        $commits = [];
+        $next = "https://api.github.com/repos/{$owner}/{$repository}/pulls/{$pullRequest}/commits";
+
+        do {
+            /** @var Response $res */
+            $res = yield $this->httpClient->request($next);
+
+            if ($res->getStatus() !== 200) {
+                throw new RuntimeException;
+            }
+
+            $payload = json_decode($res->getBody());
+            $payload = array_map(function ($commit) {
+                return (object) [
+                    "sha" => $commit->sha,
+                    "message" => $commit->commit->message,
+                ];
+            }, $payload);
+
+            $commits = array_merge($commits, $payload);
+            $next = null;
+
+            if ($res->hasHeader("link")) {
+                $links = parseLinks($res->getHeader("link")[0]);
+
+                if (isset($links["next"])) {
+                    $next = $links["next"];
+                }
+            }
+        } while ($next);
+
+        return $commits;
+    }
+};
+
+Amp\run(function () use ($config, $worker) {
+    $client = new BeanstalkClient($config["beanstalk"]);
+    $consumer = new BeanstalkConsumer($client);
+    $stream = $consumer->getStream();
+
+    yield $consumer->watch("github");
+
+    print "Watching GitHub ..." . PHP_EOL;
+
+    while ($valid = yield $stream->valid()) {
+        print "Received new job ..." . PHP_EOL;
+
+        /** @var Message $message */
+        $message = $stream->consume();
+
+        resolve($worker->processJob($message))->when(function ($error) {
+            if ($error) {
+                print $error . PHP_EOL;
+            }
+        });
+    }
+});

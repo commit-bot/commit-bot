@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>{{data.sha}}</title>
+    <style>
+        .commit {
+            font-weight: bold;
+        }
+
+        .message {
+            color: #777;
+        }
+    </style>
+</head>
+<body>
+{{#user.id}}
+    <form action="/logout" method="POST">
+        <button type="submit">
+            Logout
+        </button>
+    </form>
+    <hr/>
+{{/user.id}}
+<pre>
+{{data.sha}}
+----------------------------------------
+
+State: {{data.state}}
+
+{{{data.log}}}
+</pre>
+</body>
+</html>

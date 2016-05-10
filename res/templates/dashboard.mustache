@@ -1,0 +1,20 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Dashboard</title>
+</head>
+<body>
+{{^user.id}}
+    <a href="/login">
+        Login
+    </a>
+{{/user.id}}
+{{#user.id}}
+    <form action="/logout" method="POST">
+        <button type="submit">
+            Logout
+        </button>
+    </form>
+{{/user.id}}
+</body>
+</html>

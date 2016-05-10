@@ -1,0 +1,9 @@
+{
+    "redis": "tcp://localhost:6379",
+    "mysql": "host=localhost:33060;user=commit;pass=commit;db=commit",
+    "beanstalk": "tcp://localhost:11300",
+    "github": {
+        "clientId": "",
+        "clientSecret": ""
+    }
+}
