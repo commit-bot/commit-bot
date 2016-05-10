@@ -48,6 +48,7 @@ $checks = [
     NoTrailingPeriod::class,
     FirstLetterUppercase::class,
     ImperativeVerbs::class,
+    Check\Blacklist::class,
 ];
 
 $checks = array_map(function ($check) {
