@@ -1,22 +1,57 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>Dashboard</title>
+    <title>Commit Bot</title>
+
+    <meta name="twitter:card" content="summary"/>
+    <meta name="twitter:site" content="@kelunik"/>
+    <meta name="twitter:creator" content="@kelunik"/>
+    <meta property="og:url" content="/"/>
+    <meta property="og:title" content="Commit Bot"/>
+    <meta property="og:description"
+          content="Commit Bot helps you to keep your Git commit history clean by enforcing several rules."/>
+    <meta name="viewport" content="width=device-width,initial-scale=1.0,user-scalable=no"/>
+
+    <link rel="stylesheet" href="//fonts.googleapis.com/css?family=Bitter|Source+Code+Pro:300,400,700">
+    <link rel="stylesheet" href="/css/screen.css">
 </head>
 <body>
-<form action="/logout" method="POST">
-    <button type="submit">
-        Logout
-    </button>
-</form>
-<hr/>
-<form action="/setup" method="POST">
-    {{data.error}}
+<div class="top">
+    {{^user.id}}
+        <a href="/login">
+            Login
+        </a>
+    {{/user.id}}
+    {{#user.id}}
+        <form action="/logout" method="POST">
+            <button type="submit" class="logout">
+                Logout
+            </button>
+        </form>
+    {{/user.id}}
+</div>
 
-    <input type="text" autocomplete="off" name="repository" placeholder="Repository" value="{{data.repository}}" />
-    <button type="submit">
-        Enable
-    </button>
-</form>
+<main class="content">
+    <h1>Setup Repository</h1>
+
+    <form action="/setup" method="POST">
+        <p class="help-text">
+            Setting up a new repository will create a web hook.
+            All new pull requests will checked and reports will be available through the status panel.
+        </p>
+
+        {{#data.error}}
+            <p class="help-text error">
+                {{data.error}}
+            </p>
+        {{/data.error}}
+
+        <input type="text" autocomplete="off" name="repository" placeholder="owner/repository"
+               value="{{data.repository}}"/>
+        <button type="submit">
+            Enable
+        </button>
+    </form>
+</main>
 </body>
 </html>

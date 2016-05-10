@@ -1,13 +1,47 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>Login</title>
+    <title>Commit Bot &sdot; Login</title>
+
+    <meta name="twitter:card" content="summary" />
+    <meta name="twitter:site" content="@kelunik" />
+    <meta name="twitter:creator" content="@kelunik" />
+    <meta property="og:url" content="/" />
+    <meta property="og:title" content="Commit Bot" />
+    <meta property="og:description" content="Commit Bot helps you to keep your Git commit history clean by enforcing several rules." />
+    <meta name="viewport" content="width=device-width,initial-scale=1.0,user-scalable=no" />
+
+    <link rel="stylesheet" href="//fonts.googleapis.com/css?family=Bitter|Source+Code+Pro:300,400,700">
+    <link rel="stylesheet" href="/font-awesome/css/font-awesome.min.css">
+    <link rel="stylesheet" href="/css/screen.css">
 </head>
 <body>
+<div class="top">
+    <a href="/">
+        Home
+    </a>
+</div>
+
+<main class="content">
+    <h1>Login</h1>
+
+    <p class="help-text">
+        Sign in with GitHub to allow Commit Bot to receive notifications
+        for new pull requests and pushes to already existing repository.
+    </p>
+
+    <p class="help-text">
+        Another permission we need is to read and create web hooks.
+        That way we can ensure the web hooks are setup correctly and with
+        a secret only known to Commit Bot. This ensures we can reliably verify
+        that GitHub sent us the requests.
+    </p>
+
     <form action="/login/github" method="POST">
         <button type="submit">
             <i class="fa fa-github"></i> Sign in with GitHub
         </button>
     </form>
+</main>
 </body>
 </html>

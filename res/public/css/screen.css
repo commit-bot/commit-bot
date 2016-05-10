@@ -1,0 +1,104 @@
+body {
+    margin: 0;
+    font-size: 15px;
+    font-family: "Bitter", sans-serif;
+}
+
+a {
+    text-decoration: none;
+}
+
+a:hover {
+    text-decoration: underline;
+}
+
+h1 {
+    margin: 0 0 20px 0;
+}
+
+p {
+    line-height: 26px;
+}
+
+.content button {
+    padding: 15px 20px;
+    font-size: 15px;
+    height: 50px;
+    color: #222;
+    background: white;
+    border: 2px solid #00ac4d;
+    border-radius: 4px;
+    cursor: pointer;
+    font-weight: bold;
+    font-family: "Bitter", sans-serif;
+    transform: translateY(1px);
+    margin-left: 6px;
+}
+
+button .fa {
+    margin-right: 4px;
+}
+
+.top,
+.content {
+    padding: 20px 50px;
+}
+
+.top {
+    text-align: right;
+}
+
+.content {
+    background: #f5f5f5;
+    padding-top: 30px;
+    padding-bottom: 30px;
+    border-top: 1px solid #ddd;
+    border-bottom: 1px solid #ddd;
+}
+
+.help-text {
+    max-width: 600px;
+}
+
+input[type="text"] {
+    padding: 15px 20px;
+    font-size: 15px;
+    border: 2px solid rgba(0,0,0,.2);
+    border-radius: 4px;
+    font-family: "Bitter", sans-serif;
+    line-height: 26px;
+    height: 16px;
+}
+
+input[type="text"]:focus {
+    outline: 0;
+    border-color: #08e;
+}
+
+.logout {
+    border: 0;
+    background: transparent;
+    font-weight: normal;
+    margin: 0;
+    padding: 0;
+    display: inline;
+    font-family: "Bitter", sans-serif;
+    font-size: inherit;
+    cursor: pointer;
+}
+
+.logout:hover {
+    text-decoration: underline;
+}
+
+.error {
+    color: #d00;
+}
+
+.success {
+    color: #00ac4d;
+}
+
+.commit {
+    font-weight: bold;
+}

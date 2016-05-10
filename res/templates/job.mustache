@@ -1,33 +1,58 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>{{data.sha}}</title>
-    <style>
-        .commit {
-            font-weight: bold;
-        }
+    <title>Commit Bot &sdot; {{data.sha}}</title>
 
-        .message {
-            color: #777;
-        }
-    </style>
+    <meta name="twitter:card" content="summary" />
+    <meta name="twitter:site" content="@kelunik" />
+    <meta name="twitter:creator" content="@kelunik" />
+    <meta property="og:url" content="/" />
+    <meta property="og:title" content="Commit Bot" />
+    <meta property="og:description" content="Commit Bot helps you to keep your Git commit history clean by enforcing several rules." />
+    <meta name="viewport" content="width=device-width,initial-scale=1.0,user-scalable=no" />
+
+    <link rel="stylesheet" href="//fonts.googleapis.com/css?family=Bitter|Source+Code+Pro:300,400,700">
+    <link rel="stylesheet" href="/css/screen.css">
 </head>
 <body>
-{{#user.id}}
-    <form action="/logout" method="POST">
-        <button type="submit">
-            Logout
-        </button>
-    </form>
-    <hr/>
-{{/user.id}}
-<pre>
-{{data.sha}}
-----------------------------------------
+<div class="top">
+    {{^user.id}}
+        <a href="/login">
+            Login
+        </a>
+    {{/user.id}}
+    {{#user.id}}
+        <form action="/logout" method="POST">
+            <button type="submit" class="logout">
+                Logout
+            </button>
+        </form>
+    {{/user.id}}
+</div>
 
-State: {{data.state}}
+<main class="content">
+    <h1>{{data.owner}}/{{data.repository}}</h1>
 
-{{{data.log}}}
-</pre>
+    <p class="help-text">
+        Commit <code>{{data.sha}}</code> and previous commits of the same PR
+        have been tested.
+    </p>
+
+    {{#data.isSuccess}}
+        <p class="success">
+            Everything is fine.
+        </p>
+    {{/data.isSuccess}}
+
+    {{#data.isFailure}}
+        <p class="error">
+            The following problems have been detected.
+        </p>
+    {{/data.isFailure}}
+
+    <pre>{{{data.log}}}</pre>
+
+    ← <a class="button" href="/">Back to dashboard</a>.
+</main>
 </body>
 </html>

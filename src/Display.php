@@ -33,23 +33,23 @@ class Display {
 
         switch ($result->state) {
             case 0:
-                $state = "PENDING";
+                $state = "pending";
                 break;
 
             case 1:
-                $state = "SUCCESS";
+                $state = "success";
                 break;
 
             case 2:
-                $state = "FAILURE";
+                $state = "failure";
                 break;
 
             case 3:
-                $state = "ERROR";
+                $state = "error";
                 break;
 
             default:
-                $state = "UNKNOWN";
+                $state = "unknown";
                 break;
         }
 
@@ -59,6 +59,7 @@ class Display {
             "sha" => $sha,
             "log" => $result->log,
             "state" => $state,
+            "is" . ucfirst($state) => true,
         ])));
     }
 }
