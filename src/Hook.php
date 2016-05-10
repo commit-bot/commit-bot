@@ -30,7 +30,7 @@ class Hook {
 
         $response->setHeader("content-type", "text-plain");
 
-        if (false && !hash_equals($hmac, $signature)) {
+        if (!hash_equals($hmac, $signature)) {
             $response->setStatus(400);
             $response->end("Bad signature.");
 
