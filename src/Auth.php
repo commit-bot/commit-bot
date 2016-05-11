@@ -78,6 +78,11 @@ class Auth implements Bootable {
             return;
         }
 
+        $response->push("/css/screen.css");
+        $response->push("//fonts.googleapis.com/css?family=Bitter|Source+Code+Pro:300,400,700");
+        $response->stream("");
+        $response->flush();
+
         $response->end($this->mustache->render("auth.mustache", new TemplateContext($request)));
     }
 

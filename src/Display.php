@@ -16,6 +16,11 @@ class Display {
     }
 
     public function __invoke(Request $request, Response $response, array $args) {
+        $response->push("/css/screen.css");
+        $response->push("//fonts.googleapis.com/css?family=Bitter|Source+Code+Pro:300,400,700");
+        $response->stream("");
+        $response->flush();
+
         $owner = $args["owner"];
         $repository = $args["repository"];
         $sha = $args["sha"];

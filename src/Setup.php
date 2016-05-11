@@ -49,6 +49,11 @@ class Setup {
             return;
         }
 
+        $response->push("/css/screen.css");
+        $response->push("//fonts.googleapis.com/css?family=Bitter|Source+Code+Pro:300,400,700");
+        $response->stream("");
+        $response->flush();
+
         /** @var ParsedBody $body */
         $body = yield parseBody($request);
 
@@ -82,7 +87,6 @@ class Setup {
         $httpResponse = yield $this->httpClient->request($httpRequest);
 
         if ($httpResponse->getStatus() !== 200) {
-            $response->setStatus($httpResponse->getStatus() % 100 === 5 ? 502 : 200);
             $response->end($this->mustache->render("setup.mustache", new TemplateContext($request, [
                 "error" => "Couldn't fetch remote repository.",
                 "repository" => $owner . "/" . $repository,
@@ -95,7 +99,6 @@ class Setup {
         $isAdmin = $repositoryInfo->permissions->admin ?? false;
 
         if (!$isAdmin) {
-            $response->setStatus($httpResponse->getStatus() % 100 === 5 ? 502 : 200);
             $response->end($this->mustache->render("setup.mustache", new TemplateContext($request, [
                 "error" => "Insufficient repository permissions.",
                 "repository" => $owner . "/" . $repository,
@@ -110,7 +113,6 @@ class Setup {
             try {
                 yield from $this->createHook($user["github_token"], $owner, $repository, $user["id"]);
             } catch (\RuntimeException $e) {
-                $response->setStatus($httpResponse->getStatus() % 100 === 5 ? 502 : 200);
                 $response->end($this->mustache->render("setup.mustache", new TemplateContext($request, [
                     "error" => "Hook creation failed.",
                     "repository" => $owner . "/" . $repository,
@@ -123,7 +125,6 @@ class Setup {
                 try {
                     yield from $this->updateHook($user["github_token"], $owner, $repository, $currentHook->id, $user["id"]);
                 } catch (\RuntimeException $e) {
-                    $response->setStatus($httpResponse->getStatus() % 100 === 5 ? 502 : 200);
                     $response->end($this->mustache->render("setup.mustache", new TemplateContext($request, [
                         "error" => "Hook update failed.",
                         "repository" => $owner . "/" . $repository,
